@@ -1391,6 +1391,41 @@ index 0000000..6bfd289
 +    @Override public boolean isUpgradable() { return false; }
 +    @Override public int value() { return WerewolfBalance.SCRAP_VALUE * quantity(); }
 +}
+diff --git a/core/src/main/java/com/shatteredpixel/shatteredpixeldungeon/items/Item.java b/core/src/main/java/com/shatteredpixel/shatteredpixeldungeon/items/Item.java
+index 36efda1..aa93486 100644
+--- a/core/src/main/java/com/shatteredpixel/shatteredpixeldungeon/items/Item.java
++++ b/core/src/main/java/com/shatteredpixel/shatteredpixeldungeon/items/Item.java
+@@ -606,12 +606,7 @@ public class Item implements Bundlable {
+ 		levelKnown	= bundle.getBoolean( LEVEL_KNOWN );
+ 		cursedKnown	= bundle.getBoolean( CURSED_KNOWN );
+ 		
+-		int level = bundle.getInt( LEVEL );
+-		if (level > 0) {
+-			upgrade( level );
+-		} else if (level < 0) {
+-			degrade( -level );
+-		}
++		restoreLevel( bundle.getInt( LEVEL ) );
+ 		
+ 		cursed	= bundle.getBoolean( CURSED );
+ 
+@@ -626,6 +621,16 @@ public class Item implements Bundlable {
+ 		if (bundle.contains(CUSTOM_NOTE_ID))    customNoteID = bundle.getInt(CUSTOM_NOTE_ID);
+ 	}
+ 
++	// Most equipment rebuilds upgrade side effects on load. Body weapons can instead
++	// restore their saved growth directly without permitting ordinary upgrades.
++	protected void restoreLevel( int level ) {
++		if (level > 0) {
++			upgrade( level );
++		} else if (level < 0) {
++			degrade( -level );
++		}
++	}
++
+ 	public int targetingPos( Hero user, int dst ){
+ 		return throwPos( user, dst );
+ 	}
 diff --git a/core/src/main/java/com/shatteredpixel/shatteredpixeldungeon/items/KindOfWeapon.java b/core/src/main/java/com/shatteredpixel/shatteredpixeldungeon/items/KindOfWeapon.java
 index c731f0f..c6942a0 100644
 --- a/core/src/main/java/com/shatteredpixel/shatteredpixeldungeon/items/KindOfWeapon.java
@@ -1854,10 +1889,10 @@ index 0697b73..5e0a724 100644
  			curItem = this;
 diff --git a/core/src/main/java/com/shatteredpixel/shatteredpixeldungeon/items/weapon/melee/Claws.java b/core/src/main/java/com/shatteredpixel/shatteredpixeldungeon/items/weapon/melee/Claws.java
 new file mode 100644
-index 0000000..a967c70
+index 0000000..b7020bb
 --- /dev/null
 +++ b/core/src/main/java/com/shatteredpixel/shatteredpixeldungeon/items/weapon/melee/Claws.java
-@@ -0,0 +1,236 @@
+@@ -0,0 +1,237 @@
 +/* SPDX-License-Identifier: GPL-3.0-or-later */
 +package com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee;
 +
@@ -1907,6 +1942,7 @@ index 0000000..a967c70
 +    @Override public int value() { return 0; }
 +    @Override public Item upgrade() { return this; }
 +    @Override public Item upgrade(boolean enchant) { return this; }
++    @Override protected void restoreLevel(int level) { super.level(level); }
 +    @Override public Weapon enchant(Enchantment enchantment) { return this; }
 +    @Override public void doDrop(Hero hero) {}
 +    @Override public void doThrow(Hero hero) {}
@@ -2391,10 +2427,10 @@ index 0000000..d5761e4
 +}
 diff --git a/core/src/test/java/com/shatteredpixel/shatteredpixeldungeon/actors/hero/WerewolfIntegrationChecks.java b/core/src/test/java/com/shatteredpixel/shatteredpixeldungeon/actors/hero/WerewolfIntegrationChecks.java
 new file mode 100644
-index 0000000..b4c7a3b
+index 0000000..c970440
 --- /dev/null
 +++ b/core/src/test/java/com/shatteredpixel/shatteredpixeldungeon/actors/hero/WerewolfIntegrationChecks.java
-@@ -0,0 +1,422 @@
+@@ -0,0 +1,429 @@
 +/* SPDX-License-Identifier: GPL-3.0-or-later */
 +package com.shatteredpixel.shatteredpixeldungeon.actors.hero;
 +
@@ -2545,6 +2581,10 @@ index 0000000..b4c7a3b
 +        equal(hero.HP, 17, "batch recovery pulses");
 +
 +        Hero oldHero = fixture(HeroClass.WARRIOR);
++        Sword ordinary = new Sword();
++        ordinary.level(4);
++        ordinary.enchant(new Blazing());
++        oldHero.belongings.weapon = ordinary;
 +        Bundle legacy = new Bundle();
 +        oldHero.storeInBundle(legacy);
 +        legacy.remove("ww_kills");
@@ -2555,6 +2595,9 @@ index 0000000..b4c7a3b
 +        equal(restored.werewolfKills, 0, "legacy counter default");
 +        check(!restored.werewolfHungerShieldUsed && restored.heroClass == HeroClass.WARRIOR,
 +                "legacy class/latch preserved");
++        equal(restored.belongings.weapon.trueLevel(), 4, "ordinary weapon level save unchanged");
++        check(((Sword)restored.belongings.weapon).enchantment instanceof Blazing,
++                "ordinary weapon enchantment save unchanged");
 +    }
 +
 +    private static void itemsAndFood() {
