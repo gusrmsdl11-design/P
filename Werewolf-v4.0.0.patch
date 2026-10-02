@@ -2388,10 +2388,10 @@ index 0000000..d5761e4
 +}
 diff --git a/core/src/test/java/com/shatteredpixel/shatteredpixeldungeon/actors/hero/WerewolfIntegrationChecks.java b/core/src/test/java/com/shatteredpixel/shatteredpixeldungeon/actors/hero/WerewolfIntegrationChecks.java
 new file mode 100644
-index 0000000..7dfcaf2
+index 0000000..27b6cc0
 --- /dev/null
 +++ b/core/src/test/java/com/shatteredpixel/shatteredpixeldungeon/actors/hero/WerewolfIntegrationChecks.java
-@@ -0,0 +1,419 @@
+@@ -0,0 +1,420 @@
 +/* SPDX-License-Identifier: GPL-3.0-or-later */
 +package com.shatteredpixel.shatteredpixeldungeon.actors.hero;
 +
@@ -2798,6 +2798,7 @@ index 0000000..7dfcaf2
 +                    return defaultValue(method.getReturnType());
 +                });
 +        FileUtils.setDefaultFileProperties(Files.FileType.Absolute, data.getAbsolutePath() + File.separator);
++        Game.version = "4.0.0-werewolf.1-INDEV";
 +        Game.versionCode = 912;
 +        Random.pushGenerator(897123L);
 +    }
