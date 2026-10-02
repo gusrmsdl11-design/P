@@ -1,0 +1,89 @@
+name: Build Werewolf APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/android-apk.yml'
+      - 'Werewolf-v4.0.0.patch'
+  pull_request:
+    paths:
+      - '.github/workflows/android-apk.yml'
+      - 'Werewolf-v4.0.0.patch'
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out build kit
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Check out the exact supplied upstream source
+        uses: actions/checkout@v6
+        with:
+          repository: 00-Evan/shattered-pixel-dungeon
+          ref: 2bb34a4e91d29c8785a9363cad6ddfe5122b1d4f
+          path: game
+          persist-credentials: false
+
+      - name: Apply werewolf implementation
+        working-directory: game
+        run: |
+          git apply --check ../Werewolf-v4.0.0.patch
+          git apply ../Werewolf-v4.0.0.patch
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
+
+      - name: Check growth calculations, syntax and source contracts
+        working-directory: game
+        run: bash tools/check-werewolf.sh
+
+      - name: Run engine checks and build signed installable APK
+        working-directory: game
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash gradlew :core:werewolfIntegrationCheck :android:assembleDebug --no-daemon --stacktrace 2>&1 | tee ../gradle-build.log
+
+      - name: Verify and collect APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk=game/android/build/outputs/apk/debug/android-debug.apk
+          test -s "$apk"
+          mkdir -p dist
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose "$apk" > dist/signature-verification.txt
+          cp "$apk" dist/ShatteredPD-Werewolf-v4.0.0.apk
+          (cd dist && sha256sum ShatteredPD-Werewolf-v4.0.0.apk > SHA256SUMS.txt)
+
+      - name: Save APK for download
+        uses: actions/upload-artifact@v4
+        with:
+          name: ShatteredPD-Werewolf-v4.0.0-APK
+          path: dist/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Save build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: werewolf-build-log
+          path: gradle-build.log
+          if-no-files-found: ignore
+          retention-days: 7
