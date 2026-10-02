@@ -2427,10 +2427,10 @@ index 0000000..d5761e4
 +}
 diff --git a/core/src/test/java/com/shatteredpixel/shatteredpixeldungeon/actors/hero/WerewolfIntegrationChecks.java b/core/src/test/java/com/shatteredpixel/shatteredpixeldungeon/actors/hero/WerewolfIntegrationChecks.java
 new file mode 100644
-index 0000000..c970440
+index 0000000..a33b9c0
 --- /dev/null
 +++ b/core/src/test/java/com/shatteredpixel/shatteredpixeldungeon/actors/hero/WerewolfIntegrationChecks.java
-@@ -0,0 +1,429 @@
+@@ -0,0 +1,431 @@
 +/* SPDX-License-Identifier: GPL-3.0-or-later */
 +package com.shatteredpixel.shatteredpixeldungeon.actors.hero;
 +
@@ -2807,6 +2807,8 @@ index 0000000..c970440
 +    /** Minimal test IO: real libGDX FileHandle/translation loading, memory preferences, no display. */
 +    private static void platform() {
 +        GdxNativesLoader.load();
++        // Level.drop checks the current scene; retain a real, unstarted Game with no scene.
++        new Game(null, null);
 +        final File assets = new File(System.getProperty("werewolf.assets", "core/src/main/assets"));
 +        final File data = new File(System.getProperty("werewolf.testData", "build/werewolf-test-data"));
 +        if (!data.isDirectory() && !data.mkdirs()) throw new IllegalStateException("Cannot create test data directory");
