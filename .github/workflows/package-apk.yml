@@ -1,0 +1,125 @@
+name: Prepare APK download
+
+on:
+  push:
+    paths:
+      - '.github/workflows/package-apk.yml'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Fetch the verified APK from build 5
+        uses: actions/download-artifact@v4
+        with:
+          name: ShatteredPD-Werewolf-v4.0.0-APK
+          run-id: 37026607004
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          path: package
+
+      - name: Verify and split the APK for file transfer
+        shell: bash
+        run: |
+          set -euo pipefail
+          (cd package && sha256sum -c SHA256SUMS.txt)
+          mkdir -p parts metadata
+          split -b 16M -d -a 2 package/ShatteredPD-Werewolf-v4.0.0.apk parts/part-
+          test ! -e parts/part-08
+          cp package/SHA256SUMS.txt package/signature-verification.txt metadata/
+          (cd parts && sha256sum part-* > ../metadata/PART-SHA256SUMS.txt)
+          stat -c '%s' package/ShatteredPD-Werewolf-v4.0.0.apk > metadata/APK-BYTES.txt
+
+      - name: Save APK verification metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: verified-apk-metadata
+          path: metadata/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Save transfer part 00
+        if: ${{ hashFiles('parts/part-00') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: verified-apk-part-00
+          path: parts/part-00
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 3
+
+      - name: Save transfer part 01
+        if: ${{ hashFiles('parts/part-01') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: verified-apk-part-01
+          path: parts/part-01
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 3
+
+      - name: Save transfer part 02
+        if: ${{ hashFiles('parts/part-02') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: verified-apk-part-02
+          path: parts/part-02
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 3
+
+      - name: Save transfer part 03
+        if: ${{ hashFiles('parts/part-03') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: verified-apk-part-03
+          path: parts/part-03
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 3
+
+      - name: Save transfer part 04
+        if: ${{ hashFiles('parts/part-04') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: verified-apk-part-04
+          path: parts/part-04
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 3
+
+      - name: Save transfer part 05
+        if: ${{ hashFiles('parts/part-05') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: verified-apk-part-05
+          path: parts/part-05
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 3
+
+      - name: Save transfer part 06
+        if: ${{ hashFiles('parts/part-06') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: verified-apk-part-06
+          path: parts/part-06
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 3
+
+      - name: Save transfer part 07
+        if: ${{ hashFiles('parts/part-07') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: verified-apk-part-07
+          path: parts/part-07
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 3
