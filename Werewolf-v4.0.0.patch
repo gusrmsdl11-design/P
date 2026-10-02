@@ -237,13 +237,16 @@ index 7d589b4..43d179b 100644
 \ No newline at end of file
 +}
 diff --git a/core/build.gradle b/core/build.gradle
-index 6e22a2d..063525f 100644
+index 6e22a2d..cb61040 100644
 --- a/core/build.gradle
 +++ b/core/build.gradle
-@@ -7,3 +7,14 @@ dependencies {
+@@ -6,4 +6,17 @@ java.sourceCompatibility = java.targetCompatibility = appJavaCompatibility
+ dependencies {
      api project(':SPD-classes')
      implementation project(':services')
- }
++    // Pixmap decoding is also used by item initialization in the headless engine checks.
++    testRuntimeOnly "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
++}
 +
 +// Uses the real engine and Bundle implementation; no graphics backend or JUnit dependency.
 +tasks.register('werewolfIntegrationCheck', JavaExec) {
@@ -254,7 +257,7 @@ index 6e22a2d..063525f 100644
 +    mainClass = 'com.shatteredpixel.shatteredpixeldungeon.actors.hero.WerewolfIntegrationChecks'
 +    systemProperty 'werewolf.assets', file('src/main/assets').absolutePath
 +    systemProperty 'werewolf.testData', layout.buildDirectory.dir('werewolf-test-data').get().asFile.absolutePath
-+}
+ }
 diff --git a/core/src/main/assets/messages/actors/actors.properties b/core/src/main/assets/messages/actors/actors.properties
 index d4f9396..4d5223b 100644
 --- a/core/src/main/assets/messages/actors/actors.properties
@@ -2388,10 +2391,10 @@ index 0000000..d5761e4
 +}
 diff --git a/core/src/test/java/com/shatteredpixel/shatteredpixeldungeon/actors/hero/WerewolfIntegrationChecks.java b/core/src/test/java/com/shatteredpixel/shatteredpixeldungeon/actors/hero/WerewolfIntegrationChecks.java
 new file mode 100644
-index 0000000..27b6cc0
+index 0000000..b4c7a3b
 --- /dev/null
 +++ b/core/src/test/java/com/shatteredpixel/shatteredpixeldungeon/actors/hero/WerewolfIntegrationChecks.java
-@@ -0,0 +1,420 @@
+@@ -0,0 +1,422 @@
 +/* SPDX-License-Identifier: GPL-3.0-or-later */
 +package com.shatteredpixel.shatteredpixeldungeon.actors.hero;
 +
@@ -2400,6 +2403,7 @@ index 0000000..27b6cc0
 +import com.badlogic.gdx.Gdx;
 +import com.badlogic.gdx.Preferences;
 +import com.badlogic.gdx.files.FileHandle;
++import com.badlogic.gdx.utils.GdxNativesLoader;
 +import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 +import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
 +import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -2759,6 +2763,7 @@ index 0000000..27b6cc0
 +
 +    /** Minimal test IO: real libGDX FileHandle/translation loading, memory preferences, no display. */
 +    private static void platform() {
++        GdxNativesLoader.load();
 +        final File assets = new File(System.getProperty("werewolf.assets", "core/src/main/assets"));
 +        final File data = new File(System.getProperty("werewolf.testData", "build/werewolf-test-data"));
 +        if (!data.isDirectory() && !data.mkdirs()) throw new IllegalStateException("Cannot create test data directory");
