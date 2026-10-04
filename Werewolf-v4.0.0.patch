@@ -2556,10 +2556,10 @@ index 0000000..15ca7da
 +}
 diff --git a/core/src/test/java/com/shatteredpixel/shatteredpixeldungeon/actors/hero/WerewolfIntegrationChecks.java b/core/src/test/java/com/shatteredpixel/shatteredpixeldungeon/actors/hero/WerewolfIntegrationChecks.java
 new file mode 100644
-index 0000000..1d20d6d
+index 0000000..45efc12
 --- /dev/null
 +++ b/core/src/test/java/com/shatteredpixel/shatteredpixeldungeon/actors/hero/WerewolfIntegrationChecks.java
-@@ -0,0 +1,613 @@
+@@ -0,0 +1,614 @@
 +/* SPDX-License-Identifier: GPL-3.0-or-later */
 +package com.shatteredpixel.shatteredpixeldungeon.actors.hero;
 +
@@ -2572,6 +2572,7 @@ index 0000000..1d20d6d
 +import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 +import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
 +import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
++import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 +import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.*;
 +import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.werewolf.BeastRampage;
 +import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
