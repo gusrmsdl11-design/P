@@ -4,7 +4,6 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - '.github/workflows/android-apk.yml'
       - 'Werewolf-v4.0.0.patch'
   pull_request:
     paths:
@@ -53,37 +52,81 @@ jobs:
         working-directory: game
         run: bash tools/check-werewolf.sh
 
-      - name: Run engine checks and build signed installable APK
+      - name: Run engine checks and build APK candidate
         working-directory: game
         shell: bash
         run: |
           set -euo pipefail
           bash gradlew :core:werewolfIntegrationCheck :android:assembleDebug --no-daemon --stacktrace 2>&1 | tee ../gradle-build.log
 
-      - name: Verify and collect APK
+      - name: Verify and collect APK candidate
         shell: bash
         run: |
           set -euo pipefail
           apk=game/android/build/outputs/apk/debug/android-debug.apk
           test -s "$apk"
-          mkdir -p dist
-          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose "$apk" > dist/signature-verification.txt
-          cp "$apk" dist/ShatteredPD-Werewolf-v4.0.0.apk
-          (cd dist && sha256sum ShatteredPD-Werewolf-v4.0.0.apk > SHA256SUMS.txt)
+          mkdir -p dist parts metadata
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$apk" > dist/signature-verification.txt
+          cp "$apk" dist/ShatteredPD-Werewolf-v4.0.0-werewolf.2-candidate.apk
+          (cd dist && sha256sum ShatteredPD-Werewolf-v4.0.0-werewolf.2-candidate.apk > SHA256SUMS.txt)
+          split -b 16M -d -a 2 dist/ShatteredPD-Werewolf-v4.0.0-werewolf.2-candidate.apk parts/part-
+          test ! -e parts/part-03
+          cp dist/SHA256SUMS.txt dist/signature-verification.txt metadata/
+          cp "$ANDROID_HOME/build-tools/36.0.0/lib/apksigner.jar" metadata/apksigner.jar
+          (cd parts && sha256sum part-* > ../metadata/PART-SHA256SUMS.txt)
+          stat -c '%s' "$apk" > metadata/APK-BYTES.txt
+          sha256sum Werewolf-v4.0.0.patch > metadata/SOURCE-PATCH-SHA256.txt
+          printf '%s\n' "$GITHUB_SHA" > metadata/SOURCE-COMMIT.txt
 
-      - name: Save APK for download
+      - name: Save APK candidate
         uses: actions/upload-artifact@v4
         with:
-          name: ShatteredPD-Werewolf-v4.0.0-APK
+          name: ShatteredPD-Werewolf-v2-APK-candidate
           path: dist/
           if-no-files-found: error
           retention-days: 30
+
+      - name: Save APK verification and official signing tool
+        uses: actions/upload-artifact@v4
+        with:
+          name: werewolf-v2-metadata
+          path: metadata/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Save APK transfer part 00
+        uses: actions/upload-artifact@v4
+        with:
+          name: werewolf-v2-part-00
+          path: parts/part-00
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Save APK transfer part 01
+        uses: actions/upload-artifact@v4
+        with:
+          name: werewolf-v2-part-01
+          path: parts/part-01
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Save APK transfer part 02
+        if: ${{ hashFiles('parts/part-02') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: werewolf-v2-part-02
+          path: parts/part-02
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Save build log
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: werewolf-build-log
+          name: werewolf-v2-build-log
           path: gradle-build.log
           if-no-files-found: ignore
-          retention-days: 7
+          retention-days: 30
